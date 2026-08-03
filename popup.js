@@ -54,13 +54,18 @@
         String(Date.now())
       );
     } catch (error) {
-      // localStorage kapalıysa popup yine çalışmaya devam eder.
+      // localStorage kapalıysa popup yine çalışır.
     }
   }
 
   function removeExistingPopup() {
-    var oldOverlay = document.getElementById(CONFIG.overlayId);
-    var oldStyle = document.getElementById(CONFIG.styleId);
+    var oldOverlay = document.getElementById(
+      CONFIG.overlayId
+    );
+
+    var oldStyle = document.getElementById(
+      CONFIG.styleId
+    );
 
     if (oldOverlay) {
       oldOverlay.remove();
@@ -70,17 +75,21 @@
       oldStyle.remove();
     }
 
-    document.documentElement.classList.remove(
-      "calixie-popup-scroll-lock"
-    );
+    if (document.documentElement) {
+      document.documentElement.classList.remove(
+        "calixie-popup-scroll-lock"
+      );
+    }
 
-    document.body.classList.remove(
-      "calixie-popup-scroll-lock"
-    );
+    if (document.body) {
+      document.body.classList.remove(
+        "calixie-popup-scroll-lock"
+      );
+    }
   }
 
   function createPopup() {
-    if (!document.body) {
+    if (!document.body || !document.head) {
       return;
     }
 
@@ -299,13 +308,17 @@
     var previousFocusedElement = document.activeElement;
 
     function unlockPage() {
-      document.documentElement.classList.remove(
-        "calixie-popup-scroll-lock"
-      );
+      if (document.documentElement) {
+        document.documentElement.classList.remove(
+          "calixie-popup-scroll-lock"
+        );
+      }
 
-      document.body.classList.remove(
-        "calixie-popup-scroll-lock"
-      );
+      if (document.body) {
+        document.body.classList.remove(
+          "calixie-popup-scroll-lock"
+        );
+      }
     }
 
     function closePopup(rememberClose) {
@@ -322,11 +335,19 @@
       overlay.classList.remove("is-visible");
       unlockPage();
 
-      document.removeEventListener("keydown", handleKeydown);
+      document.removeEventListener(
+        "keydown",
+        handleKeydown
+      );
 
       window.setTimeout(function () {
-        overlay.remove();
-        style.remove();
+        if (overlay && overlay.parentNode) {
+          overlay.remove();
+        }
+
+        if (style && style.parentNode) {
+          style.remove();
+        }
 
         if (
           previousFocusedElement &&
@@ -355,17 +376,23 @@
       }
     }
 
-    closeButton.addEventListener("click", function (event) {
-      event.preventDefault();
-      event.stopPropagation();
-      closePopup(true);
-    });
-
-    overlay.addEventListener("click", function (event) {
-      if (event.target === overlay) {
+    closeButton.addEventListener(
+      "click",
+      function (event) {
+        event.preventDefault();
+        event.stopPropagation();
         closePopup(true);
       }
-    });
+    );
+
+    overlay.addEventListener(
+      "click",
+      function (event) {
+        if (event.target === overlay) {
+          closePopup(true);
+        }
+      }
+    );
 
     link.addEventListener("click", function () {
       saveCloseTime();
@@ -380,7 +407,10 @@
       closePopup(false);
     });
 
-    document.addEventListener("keydown", handleKeydown);
+    document.addEventListener(
+      "keydown",
+      handleKeydown
+    );
 
     document.documentElement.classList.add(
       "calixie-popup-scroll-lock"
@@ -390,8 +420,8 @@
       "calixie-popup-scroll-lock"
     );
 
-    requestAnimationFrame(function () {
-      requestAnimationFrame(function () {
+    window.requestAnimationFrame(function () {
+      window.requestAnimationFrame(function () {
         overlay.classList.add("is-visible");
 
         try {
@@ -410,18 +440,23 @@
       return;
     }
 
-    window.setTimeout(createPopup, CONFIG.delayMs);
+    window.setTimeout(function () {
+      createPopup();
+    }, CONFIG.delayMs);
   }
 
-  removeExistingPopup();
+  function startPopup() {
+    removeExistingPopup();
+    initializePopup();
+  }
 
   if (document.readyState === "loading") {
     document.addEventListener(
       "DOMContentLoaded",
-      initializePopup,
+      startPopup,
       { once: true }
     );
   } else {
-    initializePopup();
+    startPopup();
   }
 })();
